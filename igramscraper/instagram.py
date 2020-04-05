@@ -70,6 +70,8 @@ class Instagram:
         else:
             Instagram.instance_cache = session_folder
 
+        Instagram.instance_cache.empty_saved_cookies()
+
         self.session_username = username
         self.session_password = password
 

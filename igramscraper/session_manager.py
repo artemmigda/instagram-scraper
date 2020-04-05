@@ -17,7 +17,7 @@ class CookieSessionManager:
         if not os.path.exists(self.session_folder):
             os.makedirs(self.session_folder)
 
-        with open(self.session_folder + self.filename,"w+") as f:
+        with open(self.session_folder + self.filename, "w+") as f:
             f.write(cookie_string)
 
     def empty_saved_cookies(self):
