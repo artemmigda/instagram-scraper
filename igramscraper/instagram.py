@@ -1076,6 +1076,34 @@ class Instagram:
         data['comments'] = comments
         return data
 
+    def get_number_of_media_comments_by_id(self, media_id):
+        """
+        :param media_id: media id
+        :return: number of comments
+        """
+        code = Media.get_code_from_id(media_id)
+        variables = {
+            "shortcode": str(code),
+            "first": '0',
+            "after": ''
+            }
+        comments_url = endpoints.get_comments_before_comments_id_by_code(
+            variables)
+
+        time.sleep(self.sleep_between_requests)
+        response = self.__req.get(comments_url,
+                                  headers=self.generate_headers(
+                                      self.user_session,
+                                      self.__generate_gis_token(variables)))
+
+        if not response.status_code == Instagram.HTTP_OK:
+            raise InstagramException.default(response.text,
+                                             response.status_code)
+        jsonResponse = response.json()
+        number_of_comments = jsonResponse['data']['shortcode_media']['edge_media_to_parent_comment']['count']
+
+        return number_of_comments
+
     def get_account(self, username):
         """
         :param username: username
@@ -1580,4 +1608,38 @@ class Instagram:
                     return unfollow
             except:
                 raise InstagramException("Exept on unfollow!")
+        return False
+
+    def block(self, user_id):
+        """
+        :param user_id: user id
+        :return: bool
+        """
+        if self.is_logged_in(self.user_session):
+            url_block = endpoints.get_block_url(user_id)
+            try:
+                block = self.__req.post(url_block,
+                                        headers=self.generate_headers(
+                                            self.user_session))
+                if block.status_code == Instagram.HTTP_OK:
+                    return block
+            except:
+                raise InstagramException("Exept on block!")
+        return False
+
+    def unblock(self, user_id):
+        """
+        :param user_id: user id
+        :return: bool
+        """
+        if self.is_logged_in(self.user_session):
+            url_unblock = endpoints.get_unblock_url(user_id)
+            try:
+                unblock = self.__req.post(url_unblock,
+                                          headers=self.generate_headers(
+                                              self.user_session))
+                if unblock.status_code == Instagram.HTTP_OK:
+                    return unblock
+            except:
+                raise InstagramException("Exept on unblock!")
         return False
