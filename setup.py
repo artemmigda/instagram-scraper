@@ -3,7 +3,7 @@ from pathlib import Path
 
 setuptools.setup(
     name="igramscraper",
-    version="0.3.2",
+    version="0.3.5",
     description=('scrapes medias, likes, followers, tags and all metadata'),
     long_description=Path("README.md").read_text(),
     long_description_content_type="text/markdown",
@@ -21,7 +21,7 @@ setuptools.setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries'
     ],
 )

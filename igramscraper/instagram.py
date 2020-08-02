@@ -357,6 +357,68 @@ class Instagram:
 
         return medias
 
+    def get_tagged_medias_by_user_id(self, id, count=12, max_id=''):
+        """
+        :param id: instagram account id
+        :param count: the number of how many media you want to get
+        :param max_id: used to paginate
+        :return: list of Tagged Media
+        """
+        index = 0
+        medias = []
+        is_more_available = True
+
+        while index < count and is_more_available:
+
+            variables = {
+                'id': str(id),
+                'first': str(count),
+                'after': str(max_id)
+            }
+
+            headers = self.generate_headers(self.user_session,
+                                            self.__generate_gis_token(
+                                                variables))
+
+            time.sleep(self.sleep_between_requests)
+            response = self.__req.get(
+                endpoints.get_account_tagged_medias_json_link(variables),
+                headers=headers)
+
+            if not Instagram.HTTP_OK == response.status_code:
+                raise InstagramException.default(response.text,
+                                                 response.status_code)
+
+            arr = json.loads(response.text)
+
+            try:
+                nodes = arr['data']['user']['edge_user_to_photos_of_you'][
+                    'edges']
+            except KeyError:
+                return {}
+
+            for mediaArray in nodes:
+                if index == count:
+                    return medias
+
+                media = Media(mediaArray['node'])
+                medias.append(media)
+                index += 1
+
+            if not nodes or nodes == '':
+                return medias
+
+            max_id = \
+                arr['data']['user']['edge_user_to_photos_of_you'][
+                    'page_info'][
+                    'end_cursor']
+            is_more_available = \
+                arr['data']['user']['edge_user_to_photos_of_you'][
+                    'page_info'][
+                    'has_next_page']
+
+        return medias
+
     def get_media_by_id(self, media_id):
         """
         :param media_id: media id
@@ -870,7 +932,7 @@ class Instagram:
 
             edgesArray = jsonResponse['data']['user']['edge_followed_by'][
                 'edges']
-            if len(edgesArray) == 0:
+            if len(edgesArray) == 0 and index > 2:
                 InstagramException(
                     f'Failed to get followers of account id {account_id}.'
                     f' The account is private.',
@@ -932,7 +994,6 @@ class Instagram:
 
         index = 0
         accounts = []
-
         next_page = end_cursor
 
         if count < page_size:
@@ -962,10 +1023,11 @@ class Instagram:
             if jsonResponse['data']['user']['edge_follow']['count'] == 0:
                 return accounts
 
-            edgesArray = jsonResponse['data']['user']['edge_follow'][
-                'edges']
+            edgesArray = jsonResponse['data']['user']['edge_follow']['edges']
 
-            if len(edgesArray) == 0:
+            #confirmation of presence of previous increments of indexes making sure account
+            #is not a private account
+            if len(edgesArray) == 0 and index > 2:
                 raise InstagramException(
                     f'Failed to get follows of account id {account_id}.'
                     f' The account is private.',
@@ -1347,7 +1409,7 @@ class Instagram:
                 'user-agent': self.user_agent,
             }
             payload = {'username': self.session_username,
-                       'password': self.session_password}
+                       'enc_password': f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{self.session_password}"}
             response = self.__req.post(endpoints.LOGIN_URL, data=payload,
                                        headers=headers)
 
